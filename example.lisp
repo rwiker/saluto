@@ -30,7 +30,11 @@
                         (make-instance 'saluto:oauth2-vk.com
                                        :name "vk.com"
                                        :app-id "3958122"
-                                       :app-private-key "pDO8PPhlfKLDL3gGryjC")))
+                                       :app-private-key "pDO8PPhlfKLDL3gGryjC")
+                        (make-instance 'saluto:oauth2-microsoftonline.com
+                                       :name "microsoftonline.com"
+                                       :app-id "e3067a30-165b-4076-afb7-baa5bda2ccb2"
+                                       :app-private-key "xqfrJIAN2530^nyxSMQ3$%-")))
   (saluto:*store-userinfo-fun*
    (lambda (info)
      (setf (gethash hunchentoot:*session* *users*) info)))
@@ -61,6 +65,8 @@
                    "Login with VK.COM"))
            (:p (:a :href (restas:genurl 'saluto.login-with :provider "google.com")
                    "Login with GOOGLE.COM"))
+           (:p (:a :href (restas:genurl 'saluto.login-with :provider "microsoftonline.com")
+                   "Login with MICROSOFTONLINE.COM"))
            (:p "Not logged in")))))))
 
 (restas:start '#:restas.test-saluto :port 8080)
