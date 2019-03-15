@@ -17,9 +17,13 @@
 
 (defmethod make-redirect-uri ((provider oauth2-microsoftonline.com) session redirect-uri)
   (declare (ignore session redirect-uri))
-  (restas:genurl* 'receiver-route
-                  :provider (name provider)
-                  :states ""))
+  (let ((url (restas:make-route-url 'receiver-route (list :provider (name provider) :states "")))
+        (host (if (boundp 'hunchentoot:*request*)
+                (hunchentoot:host)
+                "localhost")))
+    (setf (puri:uri-scheme url) (if (cl-ppcre:scan "^localhost" host) :http :https)
+          (puri:uri-host url) host)
+    (puri:render-uri url nil)))
 
 (defmethod build-goto-path :around ((provider oauth2-microsoftonline.com)
                                     session
