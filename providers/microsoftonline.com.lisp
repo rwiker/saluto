@@ -4,12 +4,18 @@
   ((oauth-login-url :accessor oauth-login-url)
    (access-token-query-url :accessor access-token-query-url)
    (userinfo-query-url :accessor userinfo-query-url)
-   (config-url :reader config-url
+   (tenant :initarg :tenant :initform nil :reader tenant)
+   (config-url :accessor config-url
+               :initarg :config-url
                :initform "https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration"
                :allocation :class)))
 
 (defmethod shared-initialize :after ((provider oauth2-microsoftonline.com) slot-names
                                       &key &allow-other-keys)
+  (when (tenant provider)
+    (setf (config-url provider)
+          (concatenate 'string "https://login.microsoftonline.com/"
+                       (tenant provider) "/v2.0/.well-known/openid-configuration")))
   (let ((conf-obj (jsown:parse (babel:octets-to-string (drakma:http-request (config-url provider) :want-stream nil)))))
     (setf (oauth-login-url provider) (jsown:val conf-obj "authorization_endpoint")
           (access-token-query-url provider) (jsown:val conf-obj "token_endpoint")
@@ -53,10 +59,10 @@
                                          answer)
   (call-next-method provider (babel:octets-to-string answer :encoding :UTF-8)))
 
-(defmethod prepare-userinfo-request ::around ((provider oauth2-microsoftonline.com)
-                                              access-token)
+(defmethod prepare-userinfo-request ((provider oauth2-microsoftonline.com)
+                                     access-token)
   (list (userinfo-query-url provider)
-        :additional-headers (list (cons "Authorization" (format nil "Bearer ~a" access-token)))))
+        :additional-headers (list (cons "Authorization" (concatenate 'string "Bearer " access-token)))))
 
 (defmethod extract-userinfo :around ((provider oauth2-microsoftonline.com)
                                      answer)
@@ -68,5 +74,5 @@
         :last-name (json-val parsed-answer "family_name")
         :avatar (json-val parsed-answer "avatar_url")
         :email (json-val parsed-answer "email")
-        :uid (json-val parsed-answer "id")))
+        :uid (json-val parsed-answer "oid")))
 
